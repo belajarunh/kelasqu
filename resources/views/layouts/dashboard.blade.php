@@ -22,8 +22,14 @@
             <div class="sidebar-caption">MENU UTAMA</div>
             <nav class="sidebar-nav" aria-label="Navigasi utama">
                 <a class="sidebar-link active" href="{{ route('dashboard') }}"><i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span></a>
-                <a class="sidebar-link" href="{{ route('dashboard') }}#kelas"><i class="bi bi-journals"></i><span>{{ auth()->user()->role === 'admin' ? 'Pengguna' : 'Kelas saya' }}</span></a>
-                <a class="sidebar-link" href="{{ route('dashboard') }}#aktivitas"><i class="bi bi-calendar3"></i><span>Aktivitas</span></a>
+                @if (auth()->user()->role === 'admin')
+                    <a class="sidebar-link" href="{{ route('kelas.index') }}"><i class="bi bi-journals"></i><span>Kelola kelas</span></a>
+                    <a class="sidebar-link" href="{{ route('admin.learners.index') }}"><i class="bi bi-people"></i><span>Data learner</span></a>
+                    <a class="sidebar-link" href="{{ route('dashboard') }}#aktivitas"><i class="bi bi-calendar3"></i><span>Aktivitas</span></a>
+                @else
+                    <a class="sidebar-link" href="{{ route('kelas.catalog') }}"><i class="bi bi-grid"></i><span>Daftar kelas</span></a>
+                    <a class="sidebar-link" href="{{ route('kelas.index') }}"><i class="bi bi-journal-bookmark"></i><span>Kelas saya</span></a>
+                @endif
             </nav>
             <div class="sidebar-bottom">
                 <div class="sidebar-help"><span class="help-icon"><i class="bi bi-lightbulb"></i></span><strong>Terus bertumbuh</strong><p>Belajar sedikit demi sedikit, hasilnya berarti.</p></div>
