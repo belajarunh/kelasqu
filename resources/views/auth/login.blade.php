@@ -17,7 +17,14 @@
                 @csrf
                 <div class="mb-3"><label class="form-label" for="email">Alamat email</label><div class="input-shell"><i class="bi bi-envelope"></i><input id="email" name="email" type="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}" placeholder="nama@email.com" autocomplete="email" required autofocus></div>@error('email')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
                 <div class="mb-3"><div class="label-row"><label class="form-label" for="password">Kata sandi</label></div><div class="input-shell"><i class="bi bi-lock"></i><input id="password" name="password" type="password" class="form-control @error('password') is-invalid @enderror" placeholder="Masukkan kata sandi" autocomplete="current-password" required></div>@error('password')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
-                <div class="mb-3"><label class="form-label" id="captcha-question" for="captcha_answer">Verifikasi: {{ $captchaQuestion }}</label><div class="input-shell"><i class="bi bi-shield-check"></i><input id="captcha_answer" name="captcha_answer" type="number" class="form-control @error('captcha_answer') is-invalid @enderror" aria-describedby="captcha-question" placeholder="Jawaban" inputmode="numeric" required></div>@error('captcha_answer')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
+                <div class="mb-3">
+                    @if (config('services.turnstile.site_key'))
+                        <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}" data-action="login"></div>
+                    @else
+                        <div class="text-danger">Verifikasi keamanan belum dikonfigurasi.</div>
+                    @endif
+                    @error('cf-turnstile-response')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
                 <label class="remember-row"><input type="checkbox" name="remember" value="1"><span>Ingat saya di perangkat ini</span></label>
                 <button class="btn btn-primary-forest w-100" type="submit">Masuk ke KelasQu <i class="bi bi-arrow-right"></i></button>
             </form>
@@ -26,4 +33,5 @@
         </div>
     </section>
 </main>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 @endsection

@@ -3,19 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\CloudflareTurnstile;
 use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AuthController extends Controller
 {
-    public function showLogin(Request $request): View
+    public function showLogin(): View
     {
-        return view('auth.login', [
-            'captchaQuestion' => $this->createCaptchaQuestion($request),
-        ]);
+        return view('auth.login');
     }
 
     public function showRegister(Request $request): View
@@ -25,24 +25,21 @@ class AuthController extends Controller
         ]);
     }
 
-    public function login(Request $request): RedirectResponse
+    public function login(Request $request, CloudflareTurnstile $turnstile): RedirectResponse
     {
-        $captchaAnswer = $request->session()->pull('auth_captcha_answer');
-
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
-            'captcha_answer' => [
-                'required',
-                'integer',
-                function (string $attribute, mixed $value, Closure $fail) use ($captchaAnswer): void {
-                    if ($captchaAnswer === null || (string) $value !== (string) $captchaAnswer) {
-                        $fail('Jawaban verifikasi tidak tepat.');
-                    }
-                },
-            ],
+            'cf-turnstile-response' => ['required', 'string'],
         ]);
-        unset($credentials['captcha_answer']);
+
+        if (! $turnstile->verify($credentials['cf-turnstile-response'], $request->ip())) {
+            throw ValidationException::withMessages([
+                'cf-turnstile-response' => 'Verifikasi Cloudflare gagal. Silakan coba lagi.',
+            ]);
+        }
+
+        unset($credentials['cf-turnstile-response']);
 
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             return back()->withErrors([
