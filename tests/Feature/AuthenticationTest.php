@@ -14,14 +14,23 @@ class AuthenticationTest extends TestCase
 
     public function test_registration_creates_a_learner_and_signs_them_in(): void
     {
-        $this->withSession(['auth_captcha_answer' => 7]);
+        config([
+            'services.turnstile.site_key' => 'test-site-key',
+            'services.turnstile.secret_key' => 'test-secret-key',
+        ]);
+        Http::fake([
+            'https://challenges.cloudflare.com/turnstile/v0/siteverify' => Http::response([
+                'success' => true,
+                'action' => 'register',
+            ]),
+        ]);
 
         $response = $this->post(route('register.store'), [
             'name' => 'Rani Putri',
             'email' => 'rani@example.com',
             'password' => 'Belajar123!',
             'password_confirmation' => 'Belajar123!',
-            'captcha_answer' => '7',
+            'cf-turnstile-response' => 'valid-turnstile-token',
         ]);
 
         $response->assertRedirect(route('dashboard'));
@@ -30,6 +39,9 @@ class AuthenticationTest extends TestCase
             'email' => 'rani@example.com',
             'role' => 'user',
         ]);
+        Http::assertSent(fn (ClientRequest $request): bool => $request->url() === 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
+            && $request['secret'] === 'test-secret-key'
+            && $request['response'] === 'valid-turnstile-token');
     }
 
     public function test_user_can_sign_in_with_valid_credentials(): void
@@ -64,17 +76,26 @@ class AuthenticationTest extends TestCase
             && $request['response'] === 'valid-turnstile-token');
     }
 
-    public function test_registration_rejects_an_incorrect_captcha_answer(): void
+    public function test_registration_rejects_a_turnstile_token_for_another_action(): void
     {
-        $this->withSession(['auth_captcha_answer' => 7])
-            ->post(route('register.store'), [
-                'name' => 'Rani Putri',
-                'email' => 'rani@example.com',
-                'password' => 'Belajar123!',
-                'password_confirmation' => 'Belajar123!',
-                'captcha_answer' => '8',
-            ])
-            ->assertSessionHasErrors('captcha_answer');
+        config([
+            'services.turnstile.site_key' => 'test-site-key',
+            'services.turnstile.secret_key' => 'test-secret-key',
+        ]);
+        Http::fake([
+            'https://challenges.cloudflare.com/turnstile/v0/siteverify' => Http::response([
+                'success' => true,
+                'action' => 'login',
+            ]),
+        ]);
+
+        $this->post(route('register.store'), [
+            'name' => 'Rani Putri',
+            'email' => 'rani@example.com',
+            'password' => 'Belajar123!',
+            'password_confirmation' => 'Belajar123!',
+            'cf-turnstile-response' => 'wrong-action-token',
+        ])->assertSessionHasErrors('cf-turnstile-response');
 
         $this->assertDatabaseMissing('users', ['email' => 'rani@example.com']);
     }

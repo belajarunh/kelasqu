@@ -10,7 +10,7 @@ class CloudflareTurnstile
 {
     private const VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
-    public function verify(string $token, ?string $ipAddress): bool
+    public function verify(string $token, string $expectedAction, ?string $ipAddress): bool
     {
         $secretKey = config('services.turnstile.secret_key');
 
@@ -51,6 +51,6 @@ class CloudflareTurnstile
         }
 
         return $response->json('success') === true
-            && $response->json('action') === 'login';
+            && $response->json('action') === $expectedAction;
     }
 }

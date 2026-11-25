@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Classroom;
+use App\Models\ClassroomLessonCompletion;
+use App\Models\ClassroomLessonQuizAttempt;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ClassroomController extends Controller
@@ -42,9 +43,37 @@ class ClassroomController extends Controller
         }
 
         $classroom->load('user');
+        $classroom->setRelation(
+            'lessons',
+            $classroom->lessons()->with('questions')->orderBy('position')->orderBy('id')->get(),
+        );
+
+        $completedLessonIds = [];
+        $bestQuizAttempts = collect();
+
+        if (auth()->user()->role !== 'admin') {
+            $lessonIds = $classroom->lessons->modelKeys();
+            $completedLessonIds = ClassroomLessonCompletion::query()
+                ->where('user_id', auth()->id())
+                ->whereIn('classroom_lesson_id', $lessonIds)
+                ->pluck('classroom_lesson_id')
+                ->map(fn ($id): int => (int) $id)
+                ->all();
+
+            $bestQuizAttempts = ClassroomLessonQuizAttempt::query()
+                ->where('user_id', auth()->id())
+                ->whereIn('classroom_lesson_id', $lessonIds)
+                ->orderByDesc('score_percentage')
+                ->orderByDesc('id')
+                ->get()
+                ->unique('classroom_lesson_id')
+                ->keyBy('classroom_lesson_id');
+        }
 
         return view('classrooms.show', [
             'classroom' => $classroom,
+            'completedLessonIds' => $completedLessonIds,
+            'bestQuizAttempts' => $bestQuizAttempts,
         ]);
     }
 

@@ -20,7 +20,7 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-Untuk mengaktifkan Cloudflare Turnstile pada halaman login, buat site key dan secret key di dashboard Cloudflare, lalu isi `.env`:
+Untuk mengaktifkan Cloudflare Turnstile pada halaman login dan pendaftaran, buat site key dan secret key di dashboard Cloudflare, lalu isi `.env`:
 
 ```env
 TURNSTILE_SITE_KEY=site_key_dari_cloudflare
@@ -43,6 +43,10 @@ php artisan serve
 Buka `http://127.0.0.1:8000`.
 
 Untuk menjalankan server Laravel dan Vite dalam mode pengembangan sekaligus, gunakan `composer run dev` setelah dependency Composer dan npm terpasang.
+
+## Materi pertemuan kelas
+
+Admin dapat membuka **Kelola kelas**, memilih detail kelas, lalu menambahkan pertemuan berurutan yang berisi materi teks, tautan video, lampiran privat, instruksi tugas, dan soal kuis pilihan ganda. Peserta yang sudah enroll dapat membuka materi, mengunduh lampiran, mencoba kuis tanpa batas, dan menandai pertemuan selesai. Nilai terbaik kuis disimpan; nilai lulus awal 75% dan dapat diubah per pertemuan.
 
 ## Akun demo
 
